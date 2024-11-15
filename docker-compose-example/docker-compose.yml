@@ -1,14 +1,14 @@
 services:
   core-keeper:
     container_name: core-keeper-dedicated
-    image: escaping/core-keeper-dedicated
+    image: feserr/core-keeper-dedicated
+    ports:
+      - "27015:27015/udp"
+      - "27016:27016/udp"
     volumes:
-      - server-files:/home/steam/core-keeper-dedicated
-      - server-data:/home/steam/core-keeper-data
+      - ./server-files:/home/steam/core-keeper-dedicated
+      - ./server-data:/home/steam/core-keeper-data
     env_file:
       - ./core.env
-    restart: always
+    restart: unless-stopped
     stop_grace_period: 2m
-volumes:
-    server-files:
-    server-data:

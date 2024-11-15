@@ -1,10 +1,11 @@
 ###########################################################
 # Dockerfile that builds a Core Keeper Gameserver
 ###########################################################
-FROM cm2network/steamcmd:root
+FROM sonroyaalmerol/steamcmd-arm64:root
 
-LABEL maintainer="leandro.martin@protonmail.com"
+LABEL maintainer="feserr3@gmail.com"
 
+ENV ARM64_DEVICE=adlink
 ENV STEAMAPPID=1007
 ENV STEAMAPPID_TOOL=1963720
 ENV STEAMAPP=core-keeper
@@ -13,8 +14,6 @@ ENV STEAMAPPDATADIR="${HOMEDIR}/${STEAMAPP}-data"
 ENV SCRIPTSDIR="${HOMEDIR}/scripts"
 ENV MODSDIR="${STEAMAPPDATADIR}/StreamingAssets/Mods"
 ENV DLURL=https://raw.githubusercontent.com/escapingnetwork/core-keeper-dedicated
-
-RUN dpkg --add-architecture i386
 
 # Install Core Keeper server dependencies and clean up
 RUN set -x \
@@ -27,12 +26,28 @@ RUN set -x \
         gosu \
         jo \
         gettext-base \
+        unzip \
     && rm -rf /var/lib/apt/lists/*
+
+ARG DEPOT_DOWNLOADER_VERSION="2.7.3"
+ARG DEPOT_DOWNLOADER_FILENAME=DepotDownloader-linux-arm64.zip
+RUN wget --progress=dot:giga "https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_${DEPOT_DOWNLOADER_VERSION}/${DEPOT_DOWNLOADER_FILENAME}" -O DepotDownloader.zip \
+    && unzip DepotDownloader.zip \
+    && rm -rf DepotDownloader.xml \
+    && chmod +x DepotDownloader \
+    && mv DepotDownloader /usr/local/bin/DepotDownloader
 
 # Setup X11 Sockets folder
 RUN mkdir /tmp/.X11-unix \
     && chmod 1777 /tmp/.X11-unix \
     && chown root /tmp/.X11-unix
+
+ENV BOX64_DYNAREC_STRONGMEM=1 \
+    BOX64_DYNAREC_BIGBLOCK=1 \
+    BOX64_DYNAREC_SAFEFLAGS=1 \
+    BOX64_DYNAREC_FASTROUND=1 \
+    BOX64_DYNAREC_FASTNAN=1 \
+    BOX64_DYNAREC_X87DOUBLE=0
 
 # Setup folders
 COPY ./scripts ${SCRIPTSDIR}
@@ -75,7 +90,8 @@ ENV PUID=1000 \
     DISCORD_SERVER_STOP_ENABLED=true \
     DISCORD_SERVER_STOP_MESSAGE="" \
     DISCORD_SERVER_STOP_TITLE="Server Stopped" \
-    DISCORD_SERVER_STOP_COLOR="12779520"
+    DISCORD_SERVER_STOP_COLOR="12779520" \
+    USE_DEPOT_DOWNLOADER=true
 
 # Switch to workdir
 WORKDIR ${HOMEDIR}
